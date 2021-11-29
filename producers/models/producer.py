@@ -9,6 +9,10 @@ from confluent_kafka.avro import AvroProducer
 
 logger = logging.getLogger(__name__)
 
+# Global variable for this producer instance
+BOOTSTRAP_SERVERS = "PLAINTEXT://kafka0:9092"
+SCHEMA_REGISTRY_URL = "http://schema-registry:8081"
+
 
 class Producer:
     """Defines and provides common functionality amongst Producers"""
@@ -33,14 +37,13 @@ class Producer:
 
         #
         #
-        # TODO: Configure the broker properties below. Make sure to reference the project README
+        # Done: Configure the broker properties below. Make sure to reference the project README
         # and use the Host URL for Kafka and Schema Registry!
         #
         #
         self.broker_properties = {
-            # TODO
-            # TODO
-            # TODO
+            "bootstrap.servers": BOOTSTRAP_SERVERS,
+            "schema.registry.url": SCHEMA_REGISTRY_URL,
         }
 
         # If the topic does not already exist, try to create it
@@ -48,20 +51,56 @@ class Producer:
             self.create_topic()
             Producer.existing_topics.add(self.topic_name)
 
-        # TODO: Configure the AvroProducer
-        # self.producer = AvroProducer(
-        # )
+        # Done: Configure the AvroProducer
+        self.producer = AvroProducer(
+            {
+                "bootstrap.servers": BOOTSTRAP_SERVERS,
+                "schema.registry.url": SCHEMA_REGISTRY_URL,
+            },
+            default_key_schema=key_schema,
+            default_value_schema=value_schema,
+        )
 
     def create_topic(self):
         """Creates the producer topic if it does not already exist"""
         #
         #
-        # TODO: Write code that creates the topic for this producer if it does not already exist on
+        # Done: Write code that creates the topic for this producer if it does not already exist on
         # the Kafka Broker.
         #
         #
-        logger.info("topic creation kafka integration incomplete - skipping")
+        client = AdminClient({"bootstrap.servers": BOOTSTRAP_SERVERS})
+        if self._topic_exists(client=client):
+            logger.info(f"Topic {self.topic_name} already exists")
+            return
+        
+        new_topic = NewTopic(
+            topic=self.topic_name,
+            num_partitions=self.num_partitions,
+            replication_factor=self.num_replicas,
+            config={
+                "cleanup.policy": "delete",
+                "compression.type": "lz4",
+                "delete.retention.ms": "2000",
+                "file.delete.delay.ms": "2000",
+            },
+        )
+        
+        futures = client.create_topics([new_topic])
+        for topic, future in futures.items():
+            try:
+                future.result()
+                logger.info(f"topic {self.topic_name} was created successfully")
+            except Exception as e:
+                logger.error(f"failed to create topic {self.topic_name}: {e}")
+                raise
 
+    def _topic_exists(self, client):
+        """Checks if the topic exists"""
+        topic_metadata = client.list_topics(timeout=5)
+        topics = set(t.topic for t in iter(topic_metadata.topics.values()))
+        return self.topic_name in topics
+    
     def time_millis(self):
         return int(round(time.time() * 1000))
 
@@ -69,10 +108,11 @@ class Producer:
         """Prepares the producer for exit by cleaning up the producer"""
         #
         #
-        # TODO: Write cleanup code for the Producer here
+        # Done: Write cleanup code for the Producer here
         #
         #
-        logger.info("producer close incomplete - skipping")
+        if self.producer is not None:
+            self.producer.flush()
 
     def time_millis(self):
         """Use this function to get the key for Kafka Events"""
