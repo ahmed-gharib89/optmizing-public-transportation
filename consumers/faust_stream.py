@@ -19,6 +19,7 @@ class Station(faust.Record):
     red: bool
     blue: bool
     green: bool
+    line: str = ""
 
 
 # Faust will produce records to Kafka in this format
@@ -29,20 +30,20 @@ class TransformedStation(faust.Record):
     line: str
 
 
-# TODO: Define a Faust Stream that ingests data from the Kafka Connect stations topic and
+# Done: Define a Faust Stream that ingests data from the Kafka Connect stations topic and
 #   places it into a new topic with only the necessary information.
 app = faust.App("stations-stream", broker="kafka://localhost:9092", store="memory://")
-# TODO: Define the input Kafka Topic. Hint: What topic did Kafka Connect output to?
-# topic = app.topic("TODO", value_type=Station)
-# TODO: Define the output Kafka Topic
-# out_topic = app.topic("TODO", partitions=1)
-# TODO: Define a Faust Table
-#table = app.Table(
-#    # "TODO",
-#    # default=TODO,
-#    partitions=1,
-#    changelog_topic=out_topic,
-#)
+# Done: Define the input Kafka Topic. Hint: What topic did Kafka Connect output to?
+topic = app.topic("database.cta.connect.stations", value_type=Station)
+# Done: Define the output Kafka Topic
+out_topic = app.topic("database.cta.transformedstations", partitions=1)
+# Done: Define a Faust Table
+table = app.Table(
+    "database.cta.table.stations",
+    default=TransformedStation,
+    partitions=1,
+    changelog_topic=out_topic,
+)
 
 
 #
@@ -52,6 +53,33 @@ app = faust.App("stations-stream", broker="kafka://localhost:9092", store="memor
 # then you would set the `line` of the `TransformedStation` record to the string `"red"`
 #
 #
+def map_line(station):
+    """Return a string that maps station to a string of color ."""
+    if station.red:
+        return "red"
+    elif station.blue:
+        return "blue"
+    elif station.green:
+        return "green"
+
+
+def add_line(station):
+    """Add line to station."""
+    station.line = map_line(station)
+    return station
+
+
+@app.agent(topic)
+async def transform_stations(stations):
+    """Transform a list of stations to TransformedStructure ."""
+    stations.add_processor(add_line)
+    async for station in stations:
+        table[station.station_id] = TransformedStation(
+            station_id=station.station_id,
+            station_name=station.station_name,
+            order=station.order,
+            line=station.line,
+        )
 
 
 if __name__ == "__main__":
