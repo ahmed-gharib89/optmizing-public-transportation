@@ -10,8 +10,8 @@ from confluent_kafka.avro import AvroProducer
 logger = logging.getLogger(__name__)
 
 # Global variable for this producer instance
-BOOTSTRAP_SERVERS = "PLAINTEXT://kafka0:9092"
-SCHEMA_REGISTRY_URL = "http://schema-registry:8081"
+BOOTSTRAP_SERVERS = "PLAINTEXT://localhost:9092"
+SCHEMA_REGISTRY_URL = "http://localhost:8081"
 
 
 class Producer:
@@ -73,7 +73,7 @@ class Producer:
         if self._topic_exists(client=client):
             logger.info(f"Topic {self.topic_name} already exists")
             return
-        
+
         new_topic = NewTopic(
             topic=self.topic_name,
             num_partitions=self.num_partitions,
@@ -85,7 +85,7 @@ class Producer:
                 "file.delete.delay.ms": "2000",
             },
         )
-        
+
         futures = client.create_topics([new_topic])
         for topic, future in futures.items():
             try:
@@ -97,10 +97,18 @@ class Producer:
 
     def _topic_exists(self, client):
         """Checks if the topic exists"""
-        topic_metadata = client.list_topics(timeout=5)
+        print("Checking if topic exists")
+        try:
+            topic_metadata = client.list_topics(timeout=5)
+            print("Topic metadata: ", topic_metadata)
+        except Exception as e:
+            logger.error(
+                f"failed to get topic metadata when we reached topic {self.topic_name}: {e}"
+            )
+            return False
         topics = set(t.topic for t in iter(topic_metadata.topics.values()))
         return self.topic_name in topics
-    
+
     def time_millis(self):
         return int(round(time.time() * 1000))
 

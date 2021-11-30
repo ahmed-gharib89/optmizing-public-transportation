@@ -48,7 +48,7 @@ table = app.Table(
 
 #
 #
-# TODO: Using Faust, transform input `Station` records into `TransformedStation` records. Note that
+# Done: Using Faust, transform input `Station` records into `TransformedStation` records. Note that
 # "line" is the color of the station. So if the `Station` record has the field `red` set to true,
 # then you would set the `line` of the `TransformedStation` record to the string `"red"`
 #
