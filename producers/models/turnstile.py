@@ -12,7 +12,8 @@ logger = logging.getLogger(__name__)
 
 
 class Turnstile(Producer):
-    key_schema = avro.load(f"{Path(__file__).parents[0]}/schemas/turnstile_key.json")
+    key_schema = avro.load(
+        f"{Path(__file__).parents[0]}/schemas/turnstile_key.json")
 
     #
     # Done: Define this value schema in `schemas/turnstile_value.json, then uncomment the below
@@ -38,7 +39,7 @@ class Turnstile(Producer):
         #
         #
         super().__init__(
-            f"cta.turnstile.events",
+            f"org.chicago.cta.turnstile.v1",
             key_schema=Turnstile.key_schema,
             value_schema=Turnstile.value_schema,
             num_partitions=1,

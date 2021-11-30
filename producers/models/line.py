@@ -32,11 +32,8 @@ class Line:
         line = [
             Station(station_data["station_id"].unique()[0], stations[0], self.color)
         ]
-        num_stations = len(stations)
         prev_station = line[0]
         for i, station in enumerate(stations[1:]):
-            if i % num_stations // 2 == 0:
-                sleep(5)
             station_data = station_df[station_df["station_name"] == station]
             new_station = Station(
                 station_data["station_id"].unique()[0],

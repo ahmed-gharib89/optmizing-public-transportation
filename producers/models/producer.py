@@ -90,17 +90,16 @@ class Producer:
         for topic, future in futures.items():
             try:
                 future.result()
-                logger.info(f"topic {self.topic_name} was created successfully")
+                logger.info(
+                    f"topic {self.topic_name} was created successfully")
             except Exception as e:
                 logger.error(f"failed to create topic {self.topic_name}: {e}")
                 raise
 
     def _topic_exists(self, client):
         """Checks if the topic exists"""
-        print("Checking if topic exists")
         try:
             topic_metadata = client.list_topics(timeout=5)
-            print("Topic metadata: ", topic_metadata)
         except Exception as e:
             logger.error(
                 f"failed to get topic metadata when we reached topic {self.topic_name}: {e}"

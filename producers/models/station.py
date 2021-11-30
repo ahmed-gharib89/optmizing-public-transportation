@@ -14,12 +14,14 @@ logger = logging.getLogger(__name__)
 class Station(Producer):
     """Defines a single station"""
 
-    key_schema = avro.load(f"{Path(__file__).parents[0]}/schemas/arrival_key.json")
+    key_schema = avro.load(
+        f"{Path(__file__).parents[0]}/schemas/arrival_key.json")
 
     #
     # Done: Define this value schema in `schemas/station_value.json, then uncomment the below
     #
-    value_schema = avro.load(f"{Path(__file__).parents[0]}/schemas/arrival_value.json")
+    value_schema = avro.load(
+        f"{Path(__file__).parents[0]}/schemas/arrival_value.json")
 
     def __init__(self, station_id, name, color, direction_a=None, direction_b=None):
         self.name = name
@@ -38,7 +40,8 @@ class Station(Producer):
         #
         #
         topic_name = (
-            f"cta.stations.{station_name}"  # Done: Come up with a better topic name
+            # Done: Come up with a better topic name
+            f"org.chicago.cta.station.arrivals.{station_name}"
         )
         super().__init__(
             topic_name,
